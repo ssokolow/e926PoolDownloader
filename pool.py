@@ -37,11 +37,11 @@ def defaultSettings():
     settings['login'] = False
     settings['user'] = ''
     settings['pass'] = ''
-    settings['folder'] = r'.'
-    settings['f_temp'] = r'[${pos}]${id}_$md5'
+    settings['folder'] = os.path.join('.', 'output_pools')
+    settings['f_temp'] = r'${pos}_${id}_${rating}'
     settings['md5'] = True
     settings['retry_corrupt'] = False
-    settings['c_retries'] = 2
+    settings['c_retries'] = 3
     settings['timeout'] = 6
 
 
@@ -103,11 +103,7 @@ def changeSetings():
             if choice > (len(sets) + 1):
                 raise IndexError
 
-        except NameError:
-            print 'Invalid choice.'
-            continue
-
-        except IndexError:
+        except (NameError, IndexError):
             print 'Invalid choice.'
             continue
 
@@ -183,22 +179,27 @@ def getOptions():
     parser.add_option('-u','--user', action = 'store', dest ='user')
 
     parser.add_option('-p','--pwd', action = 'store', dest ='pwd',
-                      help = "Overrides use the user and password in the settings file (blank by default)")
+                      default = settings['pass'],
+                      help = "Overrides use the user and password in the settings file (default is \"%default\")")
 
     parser.add_option('-f','--folder', action = 'store', dest ='folder',
-                      help = "Overrides the destination folder (default is the same folder as the script)")
+                      default = settings['folder'],
+                      help = "Overrides the destination folder (default is \"%default\")")
 
     parser.add_option('-n','--name', action = 'store', dest ='temp',
-                      help = "Overrides the filename tamplate (default is $ID - $md5), available keys are: $pos(post position in the pool) $ID, $md5, $tags, $rating, $w(width), $h(height)")
+                      default = settings['f_temp'],
+                      help = "Overrides the filename tamplate (default is %default), available keys are: $pos(post position in the pool) $ID, $md5, $tags, $rating, $w(width), $h(height)")
 
     parser.add_option('--no_md5', action = 'store_false', dest ='md5',
+                      default = settings['md5'],
                       help = "Overrides whether the md5 of each downloaded file is calculed and checked against the official one (default is to check)")
 
     parser.add_option('-c','--corrupt_retries', action = 'store', dest ='c_retries',
-                      help = "Overrides how many times corrupt files will be retried if checking is enabled(default is 2)")
+                      help = "Overrides how many times corrupt files will be retried if checking is enabled (default is 3)")
 
     parser.add_option('-t','--timeout', action = 'store', dest ='timeout',
-                      help = "Overrides the connection timeout in seconds (default is 5)")
+                      default = settings['timeout'],
+                      help = "Overrides the connection timeout in seconds (default is %default)")
 
     #Parse the arguments
     (options, args) = parser.parse_args()
@@ -213,26 +214,11 @@ def getOptions():
     else:
         options.login = True
 
-    if options.pwd == None:
-        options.pwd = settings['pass']
-
-    if options.folder == None:
-        options.folder = settings['folder']
-
-    if options.temp == None:
-        options.temp = settings['f_temp']
-
-    if options.md5 == None:
-        options.md5 = settings['md5']
-
     if options.c_retries == None:
         if options.md5:
             options.c_retries = settings['c_retries']
         else:
             options.c_retries = 0
-
-    if options.timeout == None:
-        options.timeout = settings['timeout']
 
     return (options, args)
 
